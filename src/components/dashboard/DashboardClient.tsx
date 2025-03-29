@@ -40,7 +40,7 @@ export default function DashboardClient({
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
-  const { logOut } = useAuth();
+  const { logOut, user } = useAuth();
   
   // Prevent hydration mismatch by only rendering after component is mounted
   useEffect(() => {
@@ -121,6 +121,16 @@ export default function DashboardClient({
     );
     return currentNav?.name || "Dashboard";
   };
+  
+  // Get user's display name or email initial for avatar
+  const getUserInitial = () => {
+    if (user?.display_name) {
+      return user.display_name[0].toUpperCase();
+    } else if (user?.email) {
+      return user.email[0].toUpperCase();
+    }
+    return "U";
+  };
 
   return (
     <div className="flex min-h-screen bg-gray-100 dark:bg-gray-950">
@@ -175,11 +185,11 @@ export default function DashboardClient({
               <div className="flex items-center gap-3">
                 <Avatar>
                   <AvatarImage src="/placeholder-avatar.jpg" alt="Avatar" />
-                  <AvatarFallback>AD</AvatarFallback>
+                  <AvatarFallback>{getUserInitial()}</AvatarFallback>
                 </Avatar>
                 <div className="text-sm">
-                  <p className="font-medium">Admin User</p>
-                  <p className="text-muted-foreground">admin@zynkprint.com</p>
+                  <p className="font-medium">{user?.display_name || 'Admin User'}</p>
+                  <p className="text-muted-foreground">{user?.email || 'admin@zynkprint.com'}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -250,27 +260,45 @@ export default function DashboardClient({
                     <span>{item.name}</span>
                   </Link>
                 ))}
-                
-                {/* Add a separator and sign out button */}
-                <div className="pt-4 mt-6 border-t border-gray-200">
-                  <button
-                    onClick={handleSignOut}
-                    className="flex w-full items-center rounded-md px-3 py-2.5 text-sm font-medium text-red-600 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
-                  >
-                    <div className="mr-3 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-red-100 text-red-600">
-                      <LogOut className="h-5 w-5" />
+              </div>
+              
+              <div className="p-4 border-t">
+                <div className="flex items-center justify-between mt-2">
+                  <div className="flex items-center gap-3">
+                    <Avatar>
+                      <AvatarImage src="/placeholder-avatar.jpg" alt="Avatar" />
+                      <AvatarFallback>{getUserInitial()}</AvatarFallback>
+                    </Avatar>
+                    <div className="text-sm">
+                      <p className="font-medium">{user?.display_name || 'Admin User'}</p>
+                      <p className="text-muted-foreground">{user?.email || 'admin@zynkprint.com'}</p>
                     </div>
-                    <span>Sign out</span>
-                  </button>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 mt-4">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full justify-start"
+                    onClick={handleSignOut}
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Sign Out
+                  </Button>
                 </div>
               </div>
             </ScrollArea>
           </SheetContent>
         </Sheet>
         
-        <span className="flex items-center space-x-2">
-          <span className="font-medium">ZynkPrint</span>
-        </span>
+        <div className="flex items-center justify-center flex-1">
+          <span className="text-lg font-semibold">{getCurrentPageTitle()}</span>
+        </div>
+        
+        <Avatar className="h-8 w-8">
+          <AvatarImage src="/placeholder-avatar.jpg" alt="Avatar" />
+          <AvatarFallback>{getUserInitial()}</AvatarFallback>
+        </Avatar>
       </div>
       
       {/* Main Content */}
@@ -286,13 +314,13 @@ export default function DashboardClient({
               <button className="flex items-center space-x-1">
                 <Avatar>
                   <AvatarImage src="/placeholder-avatar.jpg" alt="Avatar" />
-                  <AvatarFallback>AD</AvatarFallback>
+                  <AvatarFallback>{getUserInitial()}</AvatarFallback>
                 </Avatar>
               </button>
               <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 ring-1 ring-black ring-opacity-5 invisible group-hover:visible z-50">
                 <div className="px-4 py-3">
                   <p className="text-sm">Signed in as</p>
-                  <p className="text-sm font-medium text-gray-900 truncate">admin@zynkprint.com</p>
+                  <p className="text-sm font-medium text-gray-900 truncate">{user?.email || 'admin@zynkprint.com'}</p>
                 </div>
                 <div className="border-t border-gray-100"></div>
                 <button 

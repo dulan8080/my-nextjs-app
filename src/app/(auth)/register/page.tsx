@@ -3,12 +3,14 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/lib/authContext";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { signUp } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
-    name: "",
+    display_name: "",
     email: "",
     password: "",
     confirmPassword: "",
@@ -16,7 +18,7 @@ export default function RegisterPage() {
   });
   
   const [errors, setErrors] = useState<{
-    name?: string;
+    display_name?: string;
     email?: string;
     password?: string;
     confirmPassword?: string;
@@ -37,15 +39,15 @@ export default function RegisterPage() {
 
   const validateForm = () => {
     const newErrors: {
-      name?: string;
+      display_name?: string;
       email?: string;
       password?: string;
       confirmPassword?: string;
       role?: string;
     } = {};
     
-    if (!formData.name.trim()) {
-      newErrors.name = "Name is required";
+    if (!formData.display_name.trim()) {
+      newErrors.display_name = "Name is required";
     }
     
     if (!formData.email) {
@@ -76,9 +78,8 @@ export default function RegisterPage() {
     setIsLoading(true);
     
     try {
-      // Here you would handle the actual registration process
-      // For now, we'll simulate it and redirect to login
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Use the signUp method from the AuthContext
+      await signUp(formData.email, formData.password, formData.display_name);
       router.push("/auth/signin");
     } catch (error) {
       console.error("Registration failed:", error);
@@ -109,26 +110,26 @@ export default function RegisterPage() {
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="display_name" className="block text-sm font-medium text-gray-700">
                 Full Name
               </label>
               <input
-                id="name"
-                name="name"
+                id="display_name"
+                name="display_name"
                 type="text"
                 autoComplete="name"
-                value={formData.name}
+                value={formData.display_name}
                 onChange={handleChange}
-                aria-invalid={!!errors.name}
-                aria-describedby={errors.name ? "name-error" : undefined}
+                aria-invalid={!!errors.display_name}
+                aria-describedby={errors.display_name ? "name-error" : undefined}
                 className={`relative block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 ring-1 ring-inset ${
-                  errors.name ? "ring-red-500" : "ring-gray-300"
+                  errors.display_name ? "ring-red-500" : "ring-gray-300"
                 } placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6`}
                 placeholder="John Doe"
               />
-              {errors.name && (
+              {errors.display_name && (
                 <p className="mt-2 text-sm text-red-600" id="name-error">
-                  {errors.name}
+                  {errors.display_name}
                 </p>
               )}
             </div>

@@ -18,7 +18,7 @@ type AuthContextType = {
   user: User | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, displayName: string) => Promise<void>;
+  signUp: (email: string, password: string, display_name: string) => Promise<void>;
   logOut: () => Promise<void>;
 };
 
@@ -118,7 +118,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   // Sign up with email and password
-  const signUp = async (email: string, password: string, displayName: string) => {
+  const signUp = async (email: string, password: string, display_name: string) => {
     setLoading(true);
     try {
       // In a real app, we would create the user in the database
@@ -128,7 +128,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         id: Date.now(), // In DB this would be auto-generated
         uid,
         email: email.trim().toLowerCase(),
-        display_name: displayName.trim(),
+        display_name: display_name.trim(),
         email_verified: false,
         role: "customer"
       };
@@ -136,7 +136,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // In a real app with a database
       // const result = await sql`
       //   INSERT INTO users (uid, email, display_name, email_verified, role, password_hash)
-      //   VALUES (${uid}, ${email}, ${displayName}, false, 'customer', ${hashedPassword})
+      //   VALUES (${uid}, ${email}, ${display_name}, false, 'customer', ${hashedPassword})
       //   RETURNING id, uid, email, display_name, email_verified, role
       // `;
       // const newUser = result.rows[0];

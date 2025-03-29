@@ -6,8 +6,9 @@ export const auth = {
   currentUser: {
     uid: "admin-user-id",
     email: "admin@zynkprint.com",
-    displayName: "Admin User",
-    emailVerified: true
+    display_name: "Admin User",
+    email_verified: true,
+    role: "admin"
   }
 };
 

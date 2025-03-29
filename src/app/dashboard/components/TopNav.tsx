@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth, MockUser } from "@/lib/authContext";
+import { useAuth, User } from "@/lib/authContext";
 
 interface TopNavProps {
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
-  user: MockUser;
+  user: User;
 }
 
 export default function TopNav({ sidebarOpen, setSidebarOpen, user }: TopNavProps) {
@@ -46,7 +46,7 @@ export default function TopNav({ sidebarOpen, setSidebarOpen, user }: TopNavProp
           {/* Right side items */}
           <div className="flex items-center">
             <span className="text-sm font-medium text-gray-500 mr-4 hidden sm:block">
-              Welcome, {user.displayName || user.email}
+              Welcome, {user.display_name || user.email}
             </span>
             <button
               type="button"
@@ -63,7 +63,7 @@ export default function TopNav({ sidebarOpen, setSidebarOpen, user }: TopNavProp
                 className="max-w-xs bg-blue-600 rounded-full flex items-center text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 h-8 w-8 justify-center text-white"
               >
                 <span className="sr-only">Open user menu</span>
-                <span>{user.displayName ? user.displayName[0].toUpperCase() : user.email?.[0].toUpperCase()}</span>
+                <span>{user.display_name ? user.display_name[0].toUpperCase() : user.email?.[0].toUpperCase()}</span>
               </button>
               
               {/* User dropdown menu */}
