@@ -3,15 +3,17 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/lib/authContext";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { signIn } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [errors, setErrors] = useState<{ email?: string; password?: string; general?: string }>({});
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -47,13 +49,12 @@ export default function LoginPage() {
     setIsLoading(true);
     
     try {
-      // Here you would handle the actual login process
-      // For now, we'll simulate it and redirect to dashboard
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Use the auth context to sign in
+      await signIn(formData.email, formData.password);
       router.push("/dashboard");
     } catch (error) {
       console.error("Login failed:", error);
-      // Handle login error
+      setErrors({ general: "Invalid email or password. Please try again." });
     } finally {
       setIsLoading(false);
     }
@@ -76,6 +77,21 @@ export default function LoginPage() {
             </Link>
           </p>
         </div>
+        
+        {errors.general && (
+          <div className="rounded-md bg-red-50 p-4">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-red-800">{errors.general}</h3>
+              </div>
+            </div>
+          </div>
+        )}
         
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="-space-y-px rounded-md shadow-sm">
@@ -172,6 +188,12 @@ export default function LoginPage() {
             </button>
           </div>
         </form>
+
+        <div className="mt-6">
+          <p className="text-center text-xs text-gray-600">
+            Demo credentials: admin@zynkprint.com / password
+          </p>
+        </div>
       </div>
     </div>
   );

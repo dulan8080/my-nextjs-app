@@ -18,7 +18,7 @@ export default function TopNav({ sidebarOpen, setSidebarOpen, user }: TopNavProp
   const handleSignOut = async () => {
     try {
       await logOut();
-      router.push("/login");
+      router.push("/auth/signin");
     } catch (error) {
       console.error("Error signing out:", error);
     }

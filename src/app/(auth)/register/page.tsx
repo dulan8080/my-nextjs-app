@@ -79,7 +79,7 @@ export default function RegisterPage() {
       // Here you would handle the actual registration process
       // For now, we'll simulate it and redirect to login
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      router.push("/login");
+      router.push("/auth/signin");
     } catch (error) {
       console.error("Registration failed:", error);
       // Handle registration error
@@ -98,7 +98,7 @@ export default function RegisterPage() {
           <p className="mt-2 text-center text-sm text-gray-600">
             Or{" "}
             <Link
-              href="/login"
+              href="/auth/signin"
               className="font-medium text-blue-600 hover:text-blue-500"
             >
               sign in to your existing account
@@ -255,6 +255,15 @@ export default function RegisterPage() {
             </button>
           </div>
         </form>
+
+        <div className="text-center">
+          <p className="text-sm text-gray-600">
+            Already have an account?{" "}
+            <Link href="/auth/signin" className="font-medium text-blue-600 hover:text-blue-500">
+              Sign in
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );

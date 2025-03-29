@@ -11,8 +11,11 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     // If not loading and no user is found, redirect to login
-    if (!loading && !user && !pathname.includes('/login') && !pathname.includes('/register')) {
-      router.push('/login');
+    if (!loading && !user && 
+        !pathname.includes('/auth/signin') && 
+        !pathname.includes('/auth/signup') && 
+        !pathname.includes('/auth/forgot-password')) {
+      router.push('/auth/signin');
     }
   }, [loading, user, router, pathname]);
 

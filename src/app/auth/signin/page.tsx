@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAuth } from "@/lib/authContext";
 
 export default function SignInPage() {
   const [email, setEmail] = useState("");
@@ -14,27 +15,18 @@ export default function SignInPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
+  const { signIn } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
     
-    // For now, this is a mock authentication
-    // In a real app, you would integrate with your auth provider
     try {
-      // Simulate auth process
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      if (email === "admin@zynkprint.com" && password === "password") {
-        // Mock successful login
-        console.log("Login successful");
-        router.push("/dashboard");
-      } else {
-        setError("Invalid email or password");
-      }
+      await signIn(email, password);
+      router.push("/dashboard");
     } catch (err) {
-      setError("Something went wrong. Please try again.");
+      setError("Invalid email or password. Please try again.");
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -108,6 +100,9 @@ export default function SignInPage() {
           </p>
           <p className="mt-4 text-center text-xs text-muted-foreground">
             By signing in, you agree to our Terms of Service and Privacy Policy
+          </p>
+          <p className="mt-2 text-center text-xs text-gray-600">
+            Demo credentials: admin@zynkprint.com / password
           </p>
         </CardFooter>
       </Card>

@@ -40,10 +40,10 @@ export default function HomePage() {
                 Go to Dashboard
               </Link>
               <Link
-                href="/login"
-                className="px-8 py-3 bg-white text-indigo-600 font-medium rounded-lg shadow-md hover:bg-gray-50 border border-indigo-200 transition-all duration-200"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-md shadow transition-colors duration-200"
+                href="/auth/signin"
               >
-                Log In
+                Login
               </Link>
             </div>
           </HydrationGuard>
