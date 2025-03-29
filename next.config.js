@@ -13,7 +13,7 @@ const nextConfig = {
   // },
   // Ensure src directory is used
   distDir: '.next',
-  output: 'export'
+
 };
 
 module.exports = nextConfig; 
