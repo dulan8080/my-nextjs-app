@@ -13,7 +13,8 @@ const nextConfig = {
   // },
   // Ensure src directory is used
   distDir: '.next',
-  output: 'export'
+  // Remove this line for Vercel deployment
+  // output: 'export'
 };
 
 module.exports = nextConfig; 
