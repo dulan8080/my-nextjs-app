@@ -1,8 +1,18 @@
 import { db } from './db';
 
 async function testConnection() {
+  // Skip database operations during build time
+  if (process.env.NEXT_PHASE === 'phase-production-build') {
+    console.log('Build time - skipping database connection test');
+    return;
+  }
+  
   console.log('Testing database connection...');
   try {
+    if (!db) {
+      throw new Error('Database connection not initialized');
+    }
+    
     const client = await db.connect();
     console.log('Successfully connected to Vercel Postgres database!');
     

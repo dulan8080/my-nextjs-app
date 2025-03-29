@@ -2,6 +2,19 @@ import { NextResponse } from 'next/server';
 import { executeQuery } from '@/lib/db';
 
 export async function GET() {
+  // Skip database operations during build time
+  if (process.env.NEXT_PHASE === 'phase-production-build') {
+    return NextResponse.json({
+      stats: {
+        customerCount: 0,
+        jobsInProgress: 0,
+        pendingApprovals: 0,
+        jobsDueThisWeek: 0
+      },
+      recentJobs: []
+    });
+  }
+  
   try {
     // Get counts for dashboard widgets
     const [

@@ -3,8 +3,19 @@ import fs from 'fs';
 import path from 'path';
 
 async function seedDatabase() {
+  // Skip database operations during build time
+  if (process.env.NEXT_PHASE === 'phase-production-build') {
+    console.log('Build time - skipping database seeding');
+    return;
+  }
+  
   try {
     console.log('Connecting to database...');
+    
+    if (!db) {
+      throw new Error('Database connection not initialized');
+    }
+    
     const client = await db.connect();
 
     // Read and execute schema

@@ -4,6 +4,14 @@ import { executeQuery } from '@/lib/db';
 // This is a scheduled cron job that runs daily
 // It will archive completed jobs older than 30 days
 export async function GET(request: Request) {
+  // Skip database operations during build time
+  if (process.env.NEXT_PHASE === 'phase-production-build') {
+    return NextResponse.json({ 
+      success: true, 
+      message: 'Build time - skipping database operation' 
+    });
+  }
+  
   try {
     // In a real implementation, we'd move completed jobs to an archive table
     // or update their status to 'archived'

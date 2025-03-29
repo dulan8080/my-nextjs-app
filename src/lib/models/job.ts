@@ -134,16 +134,36 @@ export async function createJob(jobData: {
   priority?: string;
   due_date?: Date | null;
 }): Promise<Job | null> {
+  // Skip database operations during build time
+  if (process.env.NEXT_PHASE === 'phase-production-build') {
+    console.log('Build time - skipping database operation');
+    return null;
+  }
+  
   try {
     const { customer_id, title, description, status = 'pending', priority = 'medium', due_date } = jobData;
     
+    // Convert the Date object to ISO string or use null
+    const formattedDueDate = due_date ? due_date.toISOString() : null;
+    
     const result = await sql`
       INSERT INTO jobs (customer_id, title, description, status, priority, due_date)
-      VALUES (${customer_id}, ${title}, ${description || null}, ${status}, ${priority}, ${due_date || null})
+      VALUES (${customer_id}, ${title}, ${description || null}, ${status}, ${priority}, ${formattedDueDate})
       RETURNING *
     `;
     
-    return result.rows[0] as Job;
+    const job = result.rows[0];
+    
+    // Convert date strings back to Date objects
+    if (job) {
+      if (job.due_date) {
+        job.due_date = new Date(job.due_date);
+      }
+      job.created_at = new Date(job.created_at);
+      job.updated_at = new Date(job.updated_at);
+    }
+    
+    return job as Job;
   } catch (error) {
     console.error('Error creating job:', error);
     return null;
@@ -151,14 +171,28 @@ export async function createJob(jobData: {
 }
 
 export async function updateJob(id: number, jobData: Partial<Job>): Promise<Job | null> {
+  // Skip database operations during build time
+  if (process.env.NEXT_PHASE === 'phase-production-build') {
+    console.log('Build time - skipping database operation');
+    return null;
+  }
+  
   try {
     // Build the dynamic part of the query
     const updates: string[] = [];
     const values: any[] = [];
     let paramIndex = 1;
     
+    // Process job data for database compatibility
+    const processedJobData: Partial<Omit<Job, 'due_date'>> & { due_date?: Date | string | null } = { ...jobData };
+    
+    // Convert Date objects to ISO strings
+    if (processedJobData.due_date instanceof Date) {
+      processedJobData.due_date = processedJobData.due_date.toISOString();
+    }
+    
     // Add fields to update
-    for (const [key, value] of Object.entries(jobData)) {
+    for (const [key, value] of Object.entries(processedJobData)) {
       if (value !== undefined && key !== 'id' && key !== 'created_at') {
         updates.push(`${key} = $${paramIndex}`);
         values.push(value);
@@ -179,12 +213,25 @@ export async function updateJob(id: number, jobData: Partial<Job>): Promise<Job 
       RETURNING *
     `;
     
-    const jobs = await executeQuery<Job[]>({
+    const jobs = await executeQuery<any[]>({
       query,
       values
     });
     
-    return jobs.length > 0 ? jobs[0] : null;
+    if (jobs.length === 0) {
+      return null;
+    }
+    
+    const job = jobs[0];
+    
+    // Convert date strings back to Date objects
+    if (job.due_date) {
+      job.due_date = new Date(job.due_date);
+    }
+    job.created_at = new Date(job.created_at);
+    job.updated_at = new Date(job.updated_at);
+    
+    return job as Job;
   } catch (error) {
     console.error('Error updating job:', error);
     return null;
