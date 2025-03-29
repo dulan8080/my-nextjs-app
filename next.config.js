@@ -13,7 +13,7 @@ const nextConfig = {
   // },
   // Ensure src directory is used
   distDir: '.next',
-  output: 'export'
+  // Removed output: 'export' to enable Vercel deployment with dynamic routes
 };
 
 module.exports = nextConfig; 
