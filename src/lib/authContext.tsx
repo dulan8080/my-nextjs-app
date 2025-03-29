@@ -19,24 +19,27 @@ type AuthContextType = {
   logOut: () => Promise<void>;
 };
 
-// Create the auth context
-const AuthContext = createContext<AuthContextType | null>(null);
-
-// Custom hook to use the auth context
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  return context;
-};
-
 // Mock admin user
 const ADMIN_USER: MockUser = {
   uid: "admin-user-id",
   email: "admin@zynkprint.com",
   displayName: "Admin User",
   emailVerified: true
+};
+
+// Create the auth context with default values for server rendering
+const AuthContext = createContext<AuthContextType>({
+  user: ADMIN_USER,
+  loading: false,
+  signIn: async () => {},
+  signUp: async () => {},
+  logOut: async () => {},
+});
+
+// Custom hook to use the auth context
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  return context;
 };
 
 // AuthProvider component that will wrap our app
