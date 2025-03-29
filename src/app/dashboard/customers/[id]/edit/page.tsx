@@ -367,4 +367,13 @@ export default function EditCustomerPage() {
       </form>
     </div>
   );
+}
+
+export async function generateStaticParams() {
+  // Return all the customer IDs you want to pre-render
+  return [
+    { id: 'customer1' },
+    { id: 'customer2' },
+    { id: 'customer3' }
+  ];
 } 
