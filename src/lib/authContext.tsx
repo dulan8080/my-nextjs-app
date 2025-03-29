@@ -49,44 +49,59 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Sign in with email and password
   const signIn = async (email: string, password: string) => {
+    setLoading(true);
     try {
+      // Trim inputs and convert email to lowercase for consistent comparison
+      const trimmedEmail = email.trim().toLowerCase();
+      const trimmedPassword = password.trim();
+      
       // Mock authentication logic
-      if (email === "admin@zynkprint.com" && password === "password") {
+      if (trimmedEmail === "admin@zynkprint.com" && trimmedPassword === "password") {
         setUser(ADMIN_USER);
+        console.log("Successfully signed in as admin");
       } else {
+        console.error(`Login failed: Email "${trimmedEmail}" with password length ${trimmedPassword.length}`);
         throw new Error("Invalid credentials");
       }
     } catch (error) {
       console.error("Error signing in:", error);
       throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
   // Sign up with email and password
   const signUp = async (email: string, password: string, displayName: string) => {
+    setLoading(true);
     try {
       // Mock sign up logic
       const newUser: MockUser = {
         uid: `user-${Date.now()}`,
-        email,
-        displayName,
+        email: email.trim().toLowerCase(),
+        displayName: displayName.trim(),
         emailVerified: false
       };
       setUser(newUser);
     } catch (error) {
       console.error("Error signing up:", error);
       throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
   // Sign out
   const logOut = async () => {
+    setLoading(true);
     try {
       // Mock sign out logic
       setUser(null);
     } catch (error) {
       console.error("Error signing out:", error);
       throw error;
+    } finally {
+      setLoading(false);
     }
   };
 

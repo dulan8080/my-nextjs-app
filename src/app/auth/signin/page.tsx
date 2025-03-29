@@ -17,16 +17,36 @@ export default function SignInPage() {
   const router = useRouter();
   const { signIn } = useAuth();
 
+  // Fill in demo credentials
+  const fillDemoCredentials = () => {
+    setEmail("admin@zynkprint.com");
+    setPassword("password");
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
     
     try {
+      // Form validation
+      if (!email.trim()) {
+        throw new Error("Email is required");
+      }
+      
+      if (!password.trim()) {
+        throw new Error("Password is required");
+      }
+      
       await signIn(email, password);
       router.push("/dashboard");
-    } catch (err) {
-      setError("Invalid email or password. Please try again.");
+    } catch (err: any) {
+      // Handle different types of errors
+      if (err.message === "Invalid credentials") {
+        setError("Invalid email or password. Please try again.");
+      } else {
+        setError(err.message || "An error occurred during sign in");
+      }
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -102,7 +122,13 @@ export default function SignInPage() {
             By signing in, you agree to our Terms of Service and Privacy Policy
           </p>
           <p className="mt-2 text-center text-xs text-gray-600">
-            Demo credentials: admin@zynkprint.com / password
+            <button 
+              onClick={fillDemoCredentials}
+              className="text-primary hover:underline focus:outline-none"
+              type="button"
+            >
+              Use demo credentials:
+            </button> admin@zynkprint.com / password
           </p>
         </CardFooter>
       </Card>
