@@ -89,10 +89,12 @@ const initialFormData: OffsetPrintFormData = {
   },
   laminating: {
     type: "none",
-    height: 0,
-    width: 0,
-    unitPrice: 0,
+    size: {
+      height: 0,
+      width: 0
+    },
     qty: 0,
+    unitPrice: 0,
     result: 0
   },
   dieCut: {
