@@ -228,16 +228,16 @@ const COLOR_OPTIONS: ColorOption[] = [
 ];
 
 const steps = [
-  { id: 1, name: "Customer Information", icon: UserIcon },
-  { id: 2, name: "Paper Supply", icon: FileTextIcon },
-  { id: 3, name: "Colors", icon: PaletteIcon },
-  { id: 4, name: "Paper Items", icon: LayersIcon },
-  { id: 5, name: "Printing Methods", icon: PrinterIcon },
-  { id: 6, name: "Laminating", icon: SquareIcon },
-  { id: 7, name: "Die Cut", icon: ScissorsIcon },
-  { id: 8, name: "Bill Books", icon: BookIcon },
-  { id: 9, name: "Calendar", icon: CalendarIcon },
-  { id: 10, name: "Material Supply", icon: PackageIcon }
+  { id: 1, name: "Customer Information", icon: UserIcon, color: "from-blue-500 to-blue-600" },
+  { id: 2, name: "Paper Supply", icon: FileTextIcon, color: "from-green-500 to-green-600" },
+  { id: 3, name: "Colors", icon: PaletteIcon, color: "from-purple-500 to-purple-600" },
+  { id: 4, name: "Paper Items", icon: LayersIcon, color: "from-yellow-500 to-yellow-600" },
+  { id: 5, name: "Printing Methods", icon: PrinterIcon, color: "from-red-500 to-red-600" },
+  { id: 6, name: "Laminating", icon: SquareIcon, color: "from-pink-500 to-pink-600" },
+  { id: 7, name: "Die Cut", icon: ScissorsIcon, color: "from-orange-500 to-orange-600" },
+  { id: 8, name: "Bill Books", icon: BookIcon, color: "from-indigo-500 to-indigo-600" },
+  { id: 9, name: "Calendar", icon: CalendarIcon, color: "from-teal-500 to-teal-600" },
+  { id: 10, name: "Material Supply", icon: PackageIcon, color: "from-cyan-500 to-cyan-600" }
 ];
 
 const BINDING_TYPES = [
@@ -309,8 +309,8 @@ export const OffsetPrintForm = ({ formData, onChange }: OffsetPrintFormProps) =>
         result: 0
       }
     },
-    laminating: formData.laminating || {
-      type: 'glossy',
+    laminating: {
+      type: 'none',
       size: {
         height: 0,
         width: 0
@@ -485,9 +485,9 @@ export const OffsetPrintForm = ({ formData, onChange }: OffsetPrintFormProps) =>
                   className={cn(
                     "flex h-12 w-12 items-center justify-center rounded-full border-2 transition-all duration-200",
                     currentStep >= step.id
-                      ? "border-primary bg-primary text-primary-foreground"
+                      ? `border-transparent bg-gradient-to-br ${step.color} text-white shadow-lg`
                       : "border-muted bg-background text-muted-foreground",
-                    currentStep === step.id && "ring-2 ring-offset-2 ring-primary"
+                    currentStep === step.id && "ring-2 ring-offset-2 ring-primary scale-110"
                   )}
                 >
                   <Icon className="h-6 w-6" />
@@ -495,7 +495,7 @@ export const OffsetPrintForm = ({ formData, onChange }: OffsetPrintFormProps) =>
                 <div
                   className={cn(
                     "absolute top-16 text-center text-xs font-medium min-h-[2.5rem] flex items-center justify-center px-1 w-24",
-                    currentStep >= step.id ? "text-primary" : "text-muted-foreground"
+                    currentStep >= step.id ? "text-primary font-semibold" : "text-muted-foreground"
                   )}
                 >
                   <span className="line-clamp-2">{step.name}</span>
