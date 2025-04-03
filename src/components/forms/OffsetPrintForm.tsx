@@ -74,6 +74,8 @@ interface DieCut {
     oldCutter: boolean;
     creasing: boolean;
     perforating: boolean;
+    embossing: boolean;
+    debossing: boolean;
   };
   impression: {
     qty: number;
@@ -115,15 +117,22 @@ interface BillBook {
   };
 }
 
+interface MaterialSupplyItem {
+  supplier: 'customer' | 'supplier';
+  supplierName: string;
+}
+
 interface MaterialSupply {
   supplier: 'customer' | 'supplier';
   supplierName?: string;
   items: {
-    ctpPlate: boolean;
-    dieCutterMaker: boolean;
-    dieCutting: boolean;
-    laminating: boolean;
-    cutting: boolean;
+    ctpPlate: MaterialSupplyItem;
+    dieCutterMaker: MaterialSupplyItem;
+    dieCutting: MaterialSupplyItem;
+    laminating: MaterialSupplyItem;
+    cutting: MaterialSupplyItem;
+    binding: MaterialSupplyItem;
+    packaging: MaterialSupplyItem;
   };
 }
 
@@ -147,7 +156,13 @@ export interface OffsetPrintFormData {
   paperCuttingByCustomer: boolean;
   
   // Paper Details
-  paperType: string;
+  paperType: {
+    type: string;
+    size: string;
+    weight: string;
+    finish: string;
+    grain: string;
+  };
   colors: {
     cyan: boolean;
     magenta: boolean;
@@ -196,6 +211,7 @@ export interface OffsetPrintFormData {
 interface OffsetPrintFormProps {
   formData: OffsetPrintFormData;
   onChange: (data: OffsetPrintFormData) => void;
+  suppliers: string[];
 }
 
 // Add this interface for color options
@@ -252,12 +268,14 @@ const MATERIAL_ITEMS = [
   { id: 'dieCutterMaker', name: 'Die Cutter Maker' },
   { id: 'dieCutting', name: 'Die Cutting' },
   { id: 'laminating', name: 'Laminating' },
-  { id: 'cutting', name: 'Cutting' }
-];
+  { id: 'cutting', name: 'Cutting' },
+  { id: 'binding', name: 'Binding' },
+  { id: 'packaging', name: 'Packaging' }
+] as const;
 
 const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
-export const OffsetPrintForm = ({ formData, onChange }: OffsetPrintFormProps) => {
+export const OffsetPrintForm = ({ formData, onChange, suppliers }: OffsetPrintFormProps) => {
   const [currentStep, setCurrentStep] = useState(1);
   const { paperTypes } = usePaperTypes();
   const [showBindingTemplate, setShowBindingTemplate] = useState(false);
@@ -277,7 +295,13 @@ export const OffsetPrintForm = ({ formData, onChange }: OffsetPrintFormProps) =>
     notes: formData.notes || '',
     paperSupplyByCustomer: formData.paperSupplyByCustomer || false,
     paperCuttingByCustomer: formData.paperCuttingByCustomer || false,
-    paperType: formData.paperType || '',
+    paperType: formData.paperType || {
+      type: '',
+      size: '',
+      weight: '',
+      finish: '',
+      grain: '',
+    },
     colors: formData.colors || {
       cyan: false,
       magenta: false,
@@ -324,7 +348,9 @@ export const OffsetPrintForm = ({ formData, onChange }: OffsetPrintFormProps) =>
         newCutter: false,
         oldCutter: false,
         creasing: false,
-        perforating: false
+        perforating: false,
+        embossing: false,
+        debossing: false
       },
       impression: {
         qty: 0,
@@ -364,11 +390,13 @@ export const OffsetPrintForm = ({ formData, onChange }: OffsetPrintFormProps) =>
     materialSupply: formData.materialSupply || {
       supplier: 'customer',
       items: {
-        ctpPlate: false,
-        dieCutterMaker: false,
-        dieCutting: false,
-        laminating: false,
-        cutting: false
+        ctpPlate: { supplier: 'customer', supplierName: '' },
+        dieCutterMaker: { supplier: 'customer', supplierName: '' },
+        dieCutting: { supplier: 'customer', supplierName: '' },
+        laminating: { supplier: 'customer', supplierName: '' },
+        cutting: { supplier: 'customer', supplierName: '' },
+        binding: { supplier: 'customer', supplierName: '' },
+        packaging: { supplier: 'customer', supplierName: '' }
       }
     }
   });
@@ -385,81 +413,118 @@ export const OffsetPrintForm = ({ formData, onChange }: OffsetPrintFormProps) =>
     };
   });
 
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+
   // Update local form data when prop changes
   useEffect(() => {
     setLocalFormData(formData);
   }, [formData]);
 
   const handleChange = (field: string, value: any) => {
-    const updatedData = {
-      ...localFormData,
-      [field]: value
-    };
-    setLocalFormData(updatedData);
-    onChange(updatedData);
+    try {
+      const updatedData = {
+        ...localFormData,
+        [field]: value
+      };
+      setLocalFormData(updatedData);
+      onChange(updatedData);
+    } catch (error) {
+      console.error('Error in handleChange:', error);
+    }
   };
 
   const handleColorChange = (colorId: string, checked: boolean) => {
-    const newColors = { ...localFormData.colors };
-    if (colorId === "custom") {
-      newColors.custom = checked;
-      if (!checked) {
-        newColors.customColorValue = "";
+    try {
+      const newColors = { ...localFormData.colors };
+      if (colorId === "custom") {
+        newColors.customColor = checked;
+        if (!checked) {
+          newColors.customColorValue = "";
+        }
+      } else {
+        const colorKey = colorId as keyof typeof newColors;
+        if (colorKey !== 'customColor' && colorKey !== 'customColorValue') {
+          newColors[colorKey] = checked;
+        }
       }
-    } else {
-      newColors[colorId as keyof typeof newColors] = checked;
+      handleChange("colors", newColors);
+    } catch (error) {
+      console.error('Error in handleColorChange:', error);
     }
-    handleChange("colors", newColors);
   };
 
   const handleAddPaperItem = () => {
-    const newPaperItem: PaperItem = {
-      id: Date.now().toString(),
-      name: '',
-      qty: 0,
-      cutSize: '',
-      cutPerSheet: 0
-    };
-    handleChange('paperItems', [...localFormData.paperItems, newPaperItem]);
+    try {
+      const newPaperItem: PaperItem = {
+        id: Date.now().toString(),
+        name: '',
+        qty: 0,
+        cutSize: '',
+        cutPerSheet: 0
+      };
+      handleChange('paperItems', [...localFormData.paperItems, newPaperItem]);
+    } catch (error) {
+      console.error('Error in handleAddPaperItem:', error);
+    }
   };
 
   const handleRemovePaperItem = (id: string) => {
-    handleChange('paperItems', localFormData.paperItems.filter(item => item.id !== id));
+    try {
+      handleChange('paperItems', localFormData.paperItems.filter(item => item.id !== id));
+    } catch (error) {
+      console.error('Error in handleRemovePaperItem:', error);
+    }
   };
 
   const handlePaperItemChange = (id: string, field: keyof PaperItem, value: any) => {
-    const updatedItems = localFormData.paperItems.map(item => 
-      item.id === id ? { ...item, [field]: value } : item
-    );
-    handleChange('paperItems', updatedItems);
+    try {
+      const updatedItems = localFormData.paperItems.map(item => 
+        item.id === id ? { ...item, [field]: value } : item
+      );
+      handleChange('paperItems', updatedItems);
+    } catch (error) {
+      console.error('Error in handlePaperItemChange:', error);
+    }
   };
 
   const handleDateTimeChange = (newDate?: Date, newTime?: { hours: number; minutes: number }) => {
-    const updatedDate = newDate || date;
-    const updatedTime = newTime || selectedTime;
-    
-    if (updatedDate) {
-      const combinedDateTime = set(updatedDate, {
-        hours: updatedTime.hours,
-        minutes: updatedTime.minutes
-      });
-      setDate(combinedDateTime);
-      handleChange("deliveryDate", combinedDateTime.toISOString());
+    try {
+      const updatedDate = newDate || date;
+      const updatedTime = newTime || selectedTime;
+      
+      if (updatedDate) {
+        const combinedDateTime = set(updatedDate, {
+          hours: updatedTime.hours,
+          minutes: updatedTime.minutes
+        });
+        setDate(combinedDateTime);
+        handleChange("deliveryDate", combinedDateTime.toISOString());
+      }
+    } catch (error) {
+      console.error('Error in handleDateTimeChange:', error);
     }
   };
 
   const handleTimeChange = (hours: number, minutes: number) => {
-    setSelectedTime({ hours, minutes });
-    handleDateTimeChange(date, { hours, minutes });
+    try {
+      setSelectedTime({ hours, minutes });
+      handleDateTimeChange(date, { hours, minutes });
+    } catch (error) {
+      console.error('Error in handleTimeChange:', error);
+    }
   };
 
   const handleSubmit = () => {
-    setShowSummary(true);
+    try {
+      setShowSummary(true);
+    } catch (error) {
+      console.error('Error in handleSubmit:', error);
+    }
   };
 
   const handleConfirmSubmit = async () => {
-    setIsSubmitting(true);
     try {
+      setIsSubmitting(true);
       // Here you would typically make an API call to add to print queue
       await new Promise(resolve => setTimeout(resolve, 1000)); // Simulated API call
       setShowSummary(false);
@@ -468,6 +533,24 @@ export const OffsetPrintForm = ({ formData, onChange }: OffsetPrintFormProps) =>
       console.error('Error submitting job:', error);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handlePopoverOpenChange = (open: boolean) => {
+    try {
+      setIsDatePickerOpen(open);
+    } catch (error) {
+      console.error('Error in handlePopoverOpenChange:', error);
+    }
+  };
+
+  const handleDateSelect = (newDate: Date | undefined) => {
+    try {
+      if (newDate) {
+        handleDateTimeChange(newDate);
+      }
+    } catch (error) {
+      console.error('Error in handleDateSelect:', error);
     }
   };
 
@@ -545,7 +628,7 @@ export const OffsetPrintForm = ({ formData, onChange }: OffsetPrintFormProps) =>
             <div className="grid grid-cols-2 gap-8">
               <div className="space-y-3">
                 <Label htmlFor="deliveryDate" className="text-base">Delivery Date & Time</Label>
-                <Popover>
+                <Popover open={isDatePickerOpen} onOpenChange={handlePopoverOpenChange}>
                   <PopoverTrigger asChild>
                     <div
                       className={cn(
@@ -574,7 +657,7 @@ export const OffsetPrintForm = ({ formData, onChange }: OffsetPrintFormProps) =>
                     <Calendar
                       mode="single"
                       selected={date}
-                      onSelect={(newDate) => handleDateTimeChange(newDate)}
+                      onSelect={handleDateSelect}
                       initialFocus
                       disabled={(date) => date < new Date()}
                       className="rounded-md border shadow-sm"
@@ -607,10 +690,6 @@ export const OffsetPrintForm = ({ formData, onChange }: OffsetPrintFormProps) =>
                         day_outside: "text-muted-foreground opacity-50",
                         day_disabled: "text-muted-foreground opacity-50",
                         day_hidden: "invisible",
-                      }}
-                      components={{
-                        IconLeft: ({ ...props }) => <ChevronLeftIcon className="h-4 w-4" />,
-                        IconRight: ({ ...props }) => <ChevronRightIcon className="h-4 w-4" />,
                       }}
                     />
                     <div className="p-4 border-t border-border">
@@ -721,8 +800,11 @@ export const OffsetPrintForm = ({ formData, onChange }: OffsetPrintFormProps) =>
               <div className="space-y-2">
                 <Label htmlFor="paperType">Paper Type</Label>
                 <Select
-                  value={localFormData.paperType}
-                  onValueChange={(value) => handleChange("paperType", value)}
+                  value={localFormData.paperType.type}
+                  onValueChange={(value) => handleChange("paperType", {
+                    ...localFormData.paperType,
+                    type: value
+                  })}
                   disabled={localFormData.paperSupplyByCustomer}
                 >
                   <SelectTrigger className="w-full">
@@ -730,7 +812,7 @@ export const OffsetPrintForm = ({ formData, onChange }: OffsetPrintFormProps) =>
                   </SelectTrigger>
                   <SelectContent>
                     {paperTypes.map((type) => (
-                      <SelectItem key={type.id} value={type.id}>
+                      <SelectItem key={type.id} value={type.name}>
                         {type.name}
                       </SelectItem>
                     ))}
@@ -749,7 +831,7 @@ export const OffsetPrintForm = ({ formData, onChange }: OffsetPrintFormProps) =>
                 <div key={color.id} className="flex items-center space-x-2">
                   <Checkbox
                     id={color.id}
-                    checked={localFormData.colors[color.id as keyof typeof localFormData.colors]}
+                    checked={localFormData.colors[color.id as keyof typeof localFormData.colors] as boolean}
                     onCheckedChange={(checked) =>
                       handleColorChange(color.id, checked as boolean)
                     }
@@ -757,7 +839,7 @@ export const OffsetPrintForm = ({ formData, onChange }: OffsetPrintFormProps) =>
                   <Label htmlFor={color.id} className="text-base">
                     {color.name}
                   </Label>
-                  {color.isCustom && localFormData.colors.custom && (
+                  {color.isCustom && localFormData.colors.customColor && (
                     <Input
                       value={localFormData.colors.customColorValue}
                       onChange={(e) =>
@@ -796,7 +878,7 @@ export const OffsetPrintForm = ({ formData, onChange }: OffsetPrintFormProps) =>
                       </SelectTrigger>
                       <SelectContent>
                         {paperTypes.map((type) => (
-                          <SelectItem key={type.id} value={type.id}>
+                          <SelectItem key={type.id} value={type.name}>
                             {type.name}
                           </SelectItem>
                         ))}
@@ -1181,7 +1263,7 @@ export const OffsetPrintForm = ({ formData, onChange }: OffsetPrintFormProps) =>
                         </SelectTrigger>
                         <SelectContent>
                           {paperTypes.map((type) => (
-                            <SelectItem key={type.id} value={type.id}>
+                            <SelectItem key={type.id} value={type.name}>
                               {type.name}
                             </SelectItem>
                           ))}
@@ -1466,14 +1548,14 @@ export const OffsetPrintForm = ({ formData, onChange }: OffsetPrintFormProps) =>
                       <Label className="text-base">{item.name}</Label>
                       <div className="flex items-center space-x-2">
                         <Button
-                          variant={localFormData.materialSupply?.items?.[item.id]?.supplier === 'customer' ? 'default' : 'outline'}
+                          variant={localFormData.materialSupply?.items?.[item.id as keyof typeof localFormData.materialSupply.items]?.supplier === 'customer' ? 'default' : 'outline'}
                           size="sm"
                           onClick={() => handleChange('materialSupply', {
                             ...(localFormData.materialSupply || {}),
                             items: {
                               ...(localFormData.materialSupply?.items || {}),
                               [item.id]: {
-                                ...(localFormData.materialSupply?.items?.[item.id] || {}),
+                                ...(localFormData.materialSupply?.items?.[item.id as keyof typeof localFormData.materialSupply.items] || {}),
                                 supplier: 'customer',
                                 supplierName: ''
                               }
@@ -1483,14 +1565,14 @@ export const OffsetPrintForm = ({ formData, onChange }: OffsetPrintFormProps) =>
                           Customer
                         </Button>
                         <Button
-                          variant={localFormData.materialSupply?.items?.[item.id]?.supplier === 'supplier' ? 'default' : 'outline'}
+                          variant={localFormData.materialSupply?.items?.[item.id as keyof typeof localFormData.materialSupply.items]?.supplier === 'supplier' ? 'default' : 'outline'}
                           size="sm"
                           onClick={() => handleChange('materialSupply', {
                             ...(localFormData.materialSupply || {}),
                             items: {
                               ...(localFormData.materialSupply?.items || {}),
                               [item.id]: {
-                                ...(localFormData.materialSupply?.items?.[item.id] || {}),
+                                ...(localFormData.materialSupply?.items?.[item.id as keyof typeof localFormData.materialSupply.items] || {}),
                                 supplier: 'supplier',
                                 supplierName: ''
                               }
@@ -1501,17 +1583,17 @@ export const OffsetPrintForm = ({ formData, onChange }: OffsetPrintFormProps) =>
                         </Button>
                       </div>
                     </div>
-                    {localFormData.materialSupply?.items?.[item.id]?.supplier === 'supplier' && (
+                    {localFormData.materialSupply?.items?.[item.id as keyof typeof localFormData.materialSupply.items]?.supplier === 'supplier' && (
                       <div className="space-y-2">
                         <Label>Supplier Name</Label>
                         <Input
-                          value={localFormData.materialSupply?.items?.[item.id]?.supplierName || ''}
+                          value={localFormData.materialSupply?.items?.[item.id as keyof typeof localFormData.materialSupply.items]?.supplierName || ''}
                           onChange={(e) => handleChange('materialSupply', {
                             ...(localFormData.materialSupply || {}),
                             items: {
                               ...(localFormData.materialSupply?.items || {}),
                               [item.id]: {
-                                ...(localFormData.materialSupply?.items?.[item.id] || {}),
+                                ...(localFormData.materialSupply?.items?.[item.id as keyof typeof localFormData.materialSupply.items] || {}),
                                 supplierName: e.target.value
                               }
                             }
@@ -1623,7 +1705,7 @@ export const OffsetPrintForm = ({ formData, onChange }: OffsetPrintFormProps) =>
                 {!localFormData.paperSupplyByCustomer && (
                   <div>
                     <p className="text-sm text-muted-foreground">Paper Type</p>
-                    <p>{localFormData.paperType}</p>
+                    <p>{localFormData.paperType.type}</p>
                   </div>
                 )}
               </div>
@@ -1700,7 +1782,7 @@ export const OffsetPrintForm = ({ formData, onChange }: OffsetPrintFormProps) =>
               <h3 className="text-lg font-semibold">Material Supply</h3>
               <div className="space-y-4">
                 {MATERIAL_ITEMS.map((item) => {
-                  const material = localFormData.materialSupply?.items?.[item.id];
+                  const material = localFormData.materialSupply?.items?.[item.id as keyof typeof localFormData.materialSupply.items];
                   if (!material) return null;
                   return (
                     <div key={item.id} className="grid grid-cols-2 gap-4 p-2 bg-muted/50 rounded">

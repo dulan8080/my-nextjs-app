@@ -17,7 +17,15 @@ interface PaperTypesContextType {
 const PaperTypesContext = createContext<PaperTypesContextType | undefined>(undefined);
 
 export function PaperTypesProvider({ children }: { children: ReactNode }) {
-  const [paperTypes, setPaperTypes] = useState<PaperType[]>([]);
+  const [paperTypes, setPaperTypes] = useState<PaperType[]>([
+    { id: "1", name: "Blank Paper" },
+    { id: "2", name: "Art Paper" },
+    { id: "3", name: "Dimy Paper" },
+    { id: "4", name: "Poster Paper" },
+    { id: "5", name: "Box Board" },
+    { id: "6", name: "Art Board" },
+    { id: "7", name: "Ivory Board" }
+  ]);
 
   const addPaperType = (name: string) => {
     setPaperTypes((prev) => [

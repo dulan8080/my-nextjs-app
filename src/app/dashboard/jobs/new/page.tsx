@@ -47,7 +47,13 @@ const initialFormData: OffsetPrintFormData = {
   notes: "",
   paperSupplyByCustomer: false,
   paperCuttingByCustomer: false,
-  paperType: "",
+  paperType: {
+    type: "",
+    size: "",
+    weight: "",
+    finish: "",
+    grain: ""
+  },
   colors: {
     cyan: false,
     magenta: false,
@@ -69,23 +75,15 @@ const initialFormData: OffsetPrintFormData = {
     customColorValue: ""
   },
   paperItems: [],
-  paperSize: "",
-  paperWeight: "",
-  paperFinish: "",
-  paperGrain: "",
-  customWidth: "",
-  customHeight: "",
-  specialRequirements: {
-    perforation: false,
-    scoring: false,
-    embossing: false,
-    foiling: false
-  },
-  printingSystem: "",
-  printImpression: {
+  printingMethod: {
+    paperSize: "",
     qty: 0,
-    unitPrice: 0,
-    result: 0
+    printingSystem: "",
+    printImpression: {
+      value1: 0,
+      value2: 0,
+      result: 0
+    }
   },
   laminating: {
     type: "none",
@@ -112,7 +110,7 @@ const initialFormData: OffsetPrintFormData = {
       result: 0
     }
   },
-  billBooks: {
+  billBook: {
     numberOfPapers: 1,
     papers: [],
     details: {
@@ -121,7 +119,7 @@ const initialFormData: OffsetPrintFormData = {
       sets: 0,
       qty: 0,
       unitPrice: 0,
-      price: 0
+      result: 0
     },
     gathering: {
       selected: false,
@@ -131,8 +129,8 @@ const initialFormData: OffsetPrintFormData = {
     },
     binding: {
       selected: false,
-      type: "",
-      template: "",
+      type: null,
+      template: null,
       qty: 0,
       unitPrice: 0,
       result: 0
@@ -143,15 +141,14 @@ const initialFormData: OffsetPrintFormData = {
   },
   materialSupply: {
     supplier: "customer",
-    supplierName: "",
     items: {
-      ctpPlate: false,
-      dieCutterMaker: false,
-      dieCutting: false,
-      laminating: false,
-      cutting: false,
-      binding: false,
-      packaging: false
+      ctpPlate: { supplier: "customer", supplierName: "" },
+      dieCutterMaker: { supplier: "customer", supplierName: "" },
+      dieCutting: { supplier: "customer", supplierName: "" },
+      laminating: { supplier: "customer", supplierName: "" },
+      cutting: { supplier: "customer", supplierName: "" },
+      binding: { supplier: "customer", supplierName: "" },
+      packaging: { supplier: "customer", supplierName: "" }
     }
   }
 };
@@ -365,7 +362,6 @@ export default function NewJobPage() {
           <OffsetPrintForm
             formData={offsetFormData}
             onChange={setOffsetFormData}
-            paperTypes={["Standard", "Premium", "Glossy", "Matte"]}
             suppliers={["Supplier A", "Supplier B", "Supplier C"]}
           />
         </div>
