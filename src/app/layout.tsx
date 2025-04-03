@@ -2,6 +2,7 @@ import './globals.css'
 import type { Metadata } from 'next'
 import { CurrencyProvider } from '@/contexts/CurrencyContext'
 import { AuthProvider } from '@/lib/authContext'
+import { PaperTypesProvider } from "@/contexts/PaperTypesContext"
 
 export const metadata: Metadata = {
   title: 'ZynkPrint - Print Management Solution',
@@ -18,7 +19,9 @@ export default function RootLayout({
       <body>
         <AuthProvider>
           <CurrencyProvider>
-            {children}
+            <PaperTypesProvider>
+              {children}
+            </PaperTypesProvider>
           </CurrencyProvider>
         </AuthProvider>
       </body>
