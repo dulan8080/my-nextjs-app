@@ -2,13 +2,26 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { PlusCircle, Save, X, Plus, Trash2, Pencil } from "lucide-react";
+import { PlusCircle, Save, X, Plus, Trash2, Pencil, ImageIcon, Upload } from "lucide-react";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { usePaperTypes } from "@/contexts/PaperTypesContext";
+import { useBindingTemplates } from "@/contexts/BindingTemplatesContext";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { useRouter } from "next/navigation";
+
+interface BindingTemplate {
+  id: string;
+  name: string;
+  description: string;
+  type: 'topPad' | 'sidePad' | 'sideBinding' | 'topBinding';
+  imageUrl: string;
+}
 
 // Mock data
 const defaultJobTypes = [
@@ -69,6 +82,7 @@ interface PaperType {
 export default function SettingsPage() {
   const { currency, setCurrency, exchangeRates, setExchangeRates } = useCurrency();
   const { paperTypes, addPaperType, removePaperType, updatePaperType } = usePaperTypes();
+  const { bindingTemplates = [], addTemplate, removeTemplate, updateTemplate } = useBindingTemplates();
   const [activeTab, setActiveTab] = useState("paper-types");
   const [jobTypes, setJobTypes] = useState(defaultJobTypes);
   const [materials, setMaterials] = useState(defaultMaterials);
@@ -110,8 +124,18 @@ export default function SettingsPage() {
   const [isEditingDbConfig, setIsEditingDbConfig] = useState(false);
 
   const [newPaperType, setNewPaperType] = useState("");
-  const [editingPaperType, setEditingPaperType] = useState<{ id: string, name: string } | null>(null);
-  const [editValue, setEditValue] = useState("");
+  const [editingPaperType, setEditingPaperType] = useState<PaperType | null>(null);
+  const [newTemplate, setNewTemplate] = useState({
+    name: "",
+    type: "topPad",
+    description: "",
+    imageUrl: ""
+  });
+  const [editingTemplate, setEditingTemplate] = useState<BindingTemplate | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string>("");
+
+  const router = useRouter();
 
   // Helper function to get currency name
   const getCurrencyName = (code: string): string => {
@@ -285,14 +309,102 @@ export default function SettingsPage() {
 
   const handleStartEdit = (id: string, name: string) => {
     setEditingPaperType({ id, name });
-    setEditValue(name);
   };
 
   const handleSaveEdit = (id: string) => {
-    if (editValue.trim()) {
-      updatePaperType(id, editValue);
+    if (editingPaperType) {
+      updatePaperType(id, editingPaperType.name);
       setEditingPaperType(null);
-      setEditValue("");
+    }
+  };
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+    }
+  };
+
+  const saveImageFile = async (file: File): Promise<string> => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to upload file');
+      }
+
+      const data = await response.json();
+      return data.url;
+    } catch (error) {
+      console.error('Error saving file:', error);
+      throw error;
+    }
+  };
+
+  const handleAddTemplate = async () => {
+    if (newTemplate.name && newTemplate.type && imageFile) {
+      try {
+        const imageUrl = await saveImageFile(imageFile);
+        addTemplate({
+          name: newTemplate.name,
+          type: newTemplate.type as 'topPad' | 'sidePad' | 'sideBinding' | 'topBinding',
+          description: newTemplate.description,
+          imageUrl
+        });
+        setNewTemplate({
+          name: "",
+          type: "topPad",
+          description: "",
+          imageUrl: ""
+        });
+        setImageFile(null);
+        setPreviewUrl("");
+        router.refresh();
+      } catch (error) {
+        console.error('Error adding template:', error);
+        // You might want to show an error message to the user here
+      }
+    }
+  };
+
+  const handleUpdateTemplate = async () => {
+    if (editingTemplate) {
+      try {
+        let imageUrl = editingTemplate.imageUrl;
+        if (imageFile) {
+          imageUrl = await saveImageFile(imageFile);
+        }
+        
+        const updatedTemplate: BindingTemplate = {
+          ...editingTemplate,
+          name: newTemplate.name || editingTemplate.name,
+          type: newTemplate.type as 'topPad' | 'sidePad' | 'sideBinding' | 'topBinding' || editingTemplate.type,
+          description: newTemplate.description || editingTemplate.description,
+          imageUrl
+        };
+        updateTemplate(editingTemplate.id, updatedTemplate);
+        setEditingTemplate(null);
+        setNewTemplate({
+          name: "",
+          type: "topPad",
+          description: "",
+          imageUrl: ""
+        });
+        setImageFile(null);
+        setPreviewUrl("");
+        router.refresh();
+      } catch (error) {
+        console.error('Error updating template:', error);
+        // You might want to show an error message to the user here
+      }
     }
   };
 
@@ -300,11 +412,12 @@ export default function SettingsPage() {
     <div className="container mx-auto py-8">
       <h1 className="text-3xl font-bold mb-8">Settings</h1>
       
-      <Tabs defaultValue="paper-types" className="space-y-6">
+      <Tabs defaultValue="paper-types" className="space-y-8">
         <TabsList>
           <TabsTrigger value="paper-types">Paper Types</TabsTrigger>
           <TabsTrigger value="colors">Colors</TabsTrigger>
           <TabsTrigger value="suppliers">Suppliers</TabsTrigger>
+          <TabsTrigger value="binding-templates">Binding Templates</TabsTrigger>
         </TabsList>
 
         <TabsContent value="paper-types">
@@ -340,8 +453,8 @@ export default function SettingsPage() {
                       {editingPaperType?.id === type.id ? (
                         <div className="flex items-center gap-2 flex-1">
                           <Input
-                            value={editValue}
-                            onChange={(e) => setEditValue(e.target.value)}
+                            value={editingPaperType.name}
+                            onChange={(e) => setEditingPaperType({ ...editingPaperType, name: e.target.value })}
                             onKeyDown={(e) => {
                               if (e.key === "Enter") {
                                 handleSaveEdit(type.id);
@@ -415,6 +528,183 @@ export default function SettingsPage() {
               <p className="text-muted-foreground">Supplier management coming soon...</p>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="binding-templates">
+          <div className="space-y-8">
+            <div className="space-y-4">
+              <h2 className="text-xl font-semibold">Add New Template</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Template Name</Label>
+                    <Input
+                      value={newTemplate.name}
+                      onChange={(e) => setNewTemplate({ ...newTemplate, name: e.target.value })}
+                      placeholder="Enter template name"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Binding Type</Label>
+                    <Select
+                      value={newTemplate.type}
+                      onValueChange={(value) => setNewTemplate({ ...newTemplate, type: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select binding type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="topPad">Top Pad</SelectItem>
+                        <SelectItem value="sidePad">Side Pad</SelectItem>
+                        <SelectItem value="sideBinding">Side Binding</SelectItem>
+                        <SelectItem value="topBinding">Top Binding</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Description</Label>
+                    <Textarea
+                      value={newTemplate.description}
+                      onChange={(e) => setNewTemplate({ ...newTemplate, description: e.target.value })}
+                      placeholder="Enter template description"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Template Image</Label>
+                    <div className="border-2 border-dashed rounded-lg p-4">
+                      <div className="flex flex-col items-center justify-center space-y-4">
+                        {previewUrl ? (
+                          <div className="relative">
+                            <img
+                              src={previewUrl}
+                              alt="Template preview"
+                              className="max-h-48 rounded-lg"
+                            />
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="absolute -top-2 -right-2"
+                              onClick={() => {
+                                setPreviewUrl("");
+                                setImageFile(null);
+                              }}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center space-y-2">
+                            <Upload className="h-8 w-8 text-muted-foreground" />
+                            <p className="text-sm text-muted-foreground">Upload an image</p>
+                          </div>
+                        )}
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageChange}
+                          className="hidden"
+                          id="template-image"
+                        />
+                        <Label
+                          htmlFor="template-image"
+                          className="cursor-pointer bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-md"
+                        >
+                          Choose Image
+                        </Label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <Button
+                onClick={editingTemplate ? handleUpdateTemplate : handleAddTemplate}
+                className="mt-4"
+              >
+                {editingTemplate ? "Update Template" : "Add Template"}
+              </Button>
+            </div>
+
+            <div className="space-y-4">
+              <h2 className="text-xl font-semibold">Existing Templates</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {bindingTemplates.map((template) => (
+                  <div
+                    key={template.id}
+                    className="border rounded-lg p-4 space-y-4 hover:border-primary/50 transition-colors"
+                  >
+                    <div className="aspect-[4/3] bg-muted rounded-lg overflow-hidden relative group">
+                      {template.imageUrl ? (
+                        <>
+                          <img
+                            src={template.imageUrl}
+                            alt={template.name}
+                            className="w-full h-full object-contain"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.onerror = null;
+                              target.src = '/placeholder.png';
+                            }}
+                          />
+                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <p className="text-white text-sm">Click to view</p>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground">
+                          <ImageIcon className="h-8 w-8 mb-2" />
+                          <span className="text-sm">No image available</span>
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <h3 className="font-medium">{template.name}</h3>
+                      <p className="text-sm text-muted-foreground capitalize">
+                        {template.type.replace(/([A-Z])/g, ' $1').trim()}
+                      </p>
+                      {template.description && (
+                        <p className="text-sm text-muted-foreground mt-2">
+                          {template.description}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => {
+                          setEditingTemplate(template);
+                          setNewTemplate({
+                            name: template.name,
+                            type: template.type,
+                            description: template.description,
+                            imageUrl: template.imageUrl
+                          });
+                          if (template.imageUrl) {
+                            setPreviewUrl(template.imageUrl);
+                          }
+                        }}
+                      >
+                        <Pencil className="h-4 w-4 mr-2" />
+                        Edit
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => removeTemplate(template.id)}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </TabsContent>
       </Tabs>
     </div>

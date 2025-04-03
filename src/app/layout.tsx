@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import { CurrencyProvider } from '@/contexts/CurrencyContext'
 import { AuthProvider } from '@/lib/authContext'
 import { PaperTypesProvider } from "@/contexts/PaperTypesContext"
+import { BindingTemplatesProvider } from "@/contexts/BindingTemplatesContext"
 
 export const metadata: Metadata = {
   title: 'ZynkPrint - Print Management Solution',
@@ -20,7 +21,9 @@ export default function RootLayout({
         <AuthProvider>
           <CurrencyProvider>
             <PaperTypesProvider>
-              {children}
+              <BindingTemplatesProvider>
+                {children}
+              </BindingTemplatesProvider>
             </PaperTypesProvider>
           </CurrencyProvider>
         </AuthProvider>

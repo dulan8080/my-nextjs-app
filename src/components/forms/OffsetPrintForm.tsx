@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { usePaperTypes } from "@/contexts/PaperTypesContext";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
@@ -28,8 +28,10 @@ import {
   SquareIcon,
   ScissorsIcon,
   BookIcon,
-  PackageIcon
+  PackageIcon,
+  ImageIcon
 } from "lucide-react";
+import { useBindingTemplates } from "@/contexts/BindingTemplatesContext";
 
 interface SpecialRequirements {
   perforation: boolean;
@@ -278,6 +280,7 @@ const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 export const OffsetPrintForm = ({ formData, onChange, suppliers }: OffsetPrintFormProps) => {
   const [currentStep, setCurrentStep] = useState(1);
   const { paperTypes } = usePaperTypes();
+  const { getTemplatesByType } = useBindingTemplates();
   const [showBindingTemplate, setShowBindingTemplate] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -551,6 +554,25 @@ export const OffsetPrintForm = ({ formData, onChange, suppliers }: OffsetPrintFo
       }
     } catch (error) {
       console.error('Error in handleDateSelect:', error);
+    }
+  };
+
+  const handleBindingTypeChange = (type: 'topPad' | 'sidePad' | 'sideBinding' | 'topBinding' | null) => {
+    try {
+      const updatedBillBook = {
+        ...localFormData.billBook,
+        binding: {
+          ...localFormData.billBook.binding,
+          type,
+          template: null
+        }
+      };
+      handleChange('billBook', updatedBillBook);
+      if (type) {
+        setShowBindingTemplate(true);
+      }
+    } catch (error) {
+      console.error('Error in handleBindingTypeChange:', error);
     }
   };
 
@@ -1463,57 +1485,82 @@ export const OffsetPrintForm = ({ formData, onChange, suppliers }: OffsetPrintFo
                             <Select
                               value={localFormData.billBook?.binding?.type || ''}
                               onValueChange={(value) => {
-                                handleChange('billBook', {
-                                  ...(localFormData.billBook || {}),
-                                  binding: {
-                                    ...(localFormData.billBook?.binding || {}),
-                                    type: value as 'topPad' | 'sidePad' | 'sideBinding' | 'topBinding'
-                                  }
-                                });
-                                setShowBindingTemplate(true);
+                                handleBindingTypeChange(value as 'topPad' | 'sidePad' | 'sideBinding' | 'topBinding' | null);
                               }}
                             >
                               <SelectTrigger>
                                 <SelectValue placeholder="Select binding type" />
                               </SelectTrigger>
                               <SelectContent>
-                                {BINDING_TYPES.map((type) => (
-                                  <SelectItem key={type.id} value={type.id}>
-                                    {type.name}
-                                  </SelectItem>
-                                ))}
+                                <SelectItem value="topPad">Top Pad</SelectItem>
+                                <SelectItem value="sidePad">Side Pad</SelectItem>
+                                <SelectItem value="sideBinding">Side Binding</SelectItem>
+                                <SelectItem value="topBinding">Top Binding</SelectItem>
                               </SelectContent>
                             </Select>
-                          </div>
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                              <Label>Quantity</Label>
-                              <Input
-                                type="number"
-                                value={localFormData.billBook?.binding?.qty || 0}
-                                onChange={(e) => handleChange('billBook', {
-                                  ...(localFormData.billBook || {}),
-                                  binding: {
-                                    ...(localFormData.billBook?.binding || {}),
-                                    qty: parseInt(e.target.value) || 0
-                                  }
-                                })}
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label>Unit Price</Label>
-                              <Input
-                                type="number"
-                                value={localFormData.billBook?.binding?.unitPrice || 0}
-                                onChange={(e) => handleChange('billBook', {
-                                  ...(localFormData.billBook || {}),
-                                  binding: {
-                                    ...(localFormData.billBook?.binding || {}),
-                                    unitPrice: parseInt(e.target.value) || 0
-                                  }
-                                })}
-                              />
-                            </div>
+
+                            {/* Show selected binding template image and details */}
+                            {localFormData.billBook?.binding?.template && (
+                              <div className="mt-4 border rounded-lg p-4">
+                                <div className="flex justify-between items-start mb-4">
+                                  <h3 className="text-sm font-medium">Selected Template</h3>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setShowBindingTemplate(true)}
+                                  >
+                                    Change Template
+                                  </Button>
+                                </div>
+                                {(() => {
+                                  const template = getTemplatesByType(localFormData.billBook.binding.type!)
+                                    .find(t => t.id === localFormData.billBook.binding.template);
+                                  if (!template) return null;
+                                  return (
+                                    <div className="space-y-4">
+                                      <div className="relative group w-[40%] mx-auto">
+                                        <div className="aspect-[3/4] bg-muted rounded-lg overflow-hidden">
+                                          {template.imageUrl ? (
+                                            <img
+                                              src={template.imageUrl}
+                                              alt={template.name}
+                                              className="w-full h-full object-contain"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                window.open(template.imageUrl, '_blank');
+                                              }}
+                                            />
+                                          ) : (
+                                            <div className="w-full h-full flex items-center justify-center">
+                                              <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                                            </div>
+                                          )}
+                                        </div>
+                                        {template.imageUrl && (
+                                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                            <Button
+                                              variant="secondary"
+                                              size="sm"
+                                              className="text-white"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                window.open(template.imageUrl, '_blank');
+                                              }}
+                                            >
+                                              View Full Size
+                                            </Button>
+                                          </div>
+                                        )}
+                                      </div>
+                                      <div>
+                                        <h3 className="font-medium">{template.name}</h3>
+                                        <p className="text-sm text-muted-foreground">{template.description}</p>
+                                      </div>
+                                    </div>
+                                  );
+                                })()}
+                              </div>
+                            )}
                           </div>
                         </div>
                       )}
@@ -1636,16 +1683,75 @@ export const OffsetPrintForm = ({ formData, onChange, suppliers }: OffsetPrintFo
 
       {showBindingTemplate && (
         <Dialog open={showBindingTemplate} onOpenChange={setShowBindingTemplate}>
-          <DialogContent>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-6">
             <DialogHeader>
-              <DialogTitle>Binding Template</DialogTitle>
+              <DialogTitle>Select Binding Template</DialogTitle>
+              <DialogDescription>
+                Choose a binding template that matches your requirements.
+              </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4">
-              <img
-                src={`/templates/${localFormData.billBook.binding.type}.png`}
-                alt={`${localFormData.billBook.binding.type} binding template`}
-                className="w-full"
-              />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {localFormData.billBook.binding.type && 
+                getTemplatesByType(localFormData.billBook.binding.type).map((template) => (
+                  <div
+                    key={template.id}
+                    className={`border rounded-lg p-4 space-y-3 cursor-pointer transition-all hover:border-primary/50 ${
+                      localFormData.billBook.binding.template === template.id
+                        ? 'border-primary ring-2 ring-primary'
+                        : ''
+                    }`}
+                    onClick={() => {
+                      const updatedBillBook = {
+                        ...localFormData.billBook,
+                        binding: {
+                          ...localFormData.billBook.binding,
+                          template: template.id
+                        }
+                      };
+                      handleChange('billBook', updatedBillBook);
+                      setShowBindingTemplate(false);
+                    }}
+                  >
+                    <div className="relative group w-[40%] mx-auto">
+                      <div className="aspect-[3/4] bg-muted rounded-lg overflow-hidden">
+                        {template.imageUrl ? (
+                          <img
+                            src={template.imageUrl}
+                            alt={template.name}
+                            className="w-full h-full object-contain"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.open(template.imageUrl, '_blank');
+                            }}
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                          </div>
+                        )}
+                      </div>
+                      {template.imageUrl && (
+                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            className="text-white"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.open(template.imageUrl, '_blank');
+                            }}
+                          >
+                            View Full Size
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <h3 className="font-medium">{template.name}</h3>
+                      <p className="text-sm text-muted-foreground">{template.description}</p>
+                    </div>
+                  </div>
+                ))}
             </div>
           </DialogContent>
         </Dialog>
@@ -1799,6 +1905,55 @@ export const OffsetPrintForm = ({ formData, onChange, suppliers }: OffsetPrintFo
                 })}
               </div>
             </div>
+
+            {/* Binding Template Preview in Summary */}
+            {localFormData.billBook.binding.template && (
+              <div className="space-y-2">
+                <h3 className="text-lg font-semibold">Selected Binding Template</h3>
+                <div className="border rounded-lg p-4">
+                  {(() => {
+                    const template = getTemplatesByType(localFormData.billBook.binding.type!)
+                      .find(t => t.id === localFormData.billBook.binding.template);
+                    if (!template) return null;
+                    return (
+                      <div className="space-y-4">
+                        <div className="relative group w-[40%] mx-auto">
+                          <div className="aspect-[3/4] bg-muted rounded-lg overflow-hidden">
+                            {template.imageUrl ? (
+                              <img
+                                src={template.imageUrl}
+                                alt={template.name}
+                                className="w-full h-full object-contain"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                              </div>
+                            )}
+                          </div>
+                          {template.imageUrl && (
+                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                className="text-white"
+                                onClick={() => window.open(template.imageUrl, '_blank')}
+                              >
+                                View Full Size
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                        <div>
+                          <h3 className="font-medium">{template.name}</h3>
+                          <p className="text-sm text-muted-foreground">{template.description}</p>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              </div>
+            )}
           </div>
 
           <DialogFooter>
