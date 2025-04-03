@@ -58,7 +58,7 @@ interface PrintingMethod {
 }
 
 interface Laminating {
-  type: 'glossy' | 'matt';
+  type: 'glossy' | 'matt' | 'none';
   size: {
     height: number;
     width: number;
@@ -925,12 +925,16 @@ export const OffsetPrintForm = ({ formData, onChange }: OffsetPrintFormProps) =>
             <div className="space-y-2">
               <Label>Laminating Type</Label>
               <RadioGroup
-                value={localFormData.laminating?.type || 'glossy'}
+                value={localFormData.laminating?.type || 'none'}
                 onValueChange={(value) => handleChange('laminating', {
                   ...(localFormData.laminating || {}),
-                  type: value as 'glossy' | 'matt'
+                  type: value as 'glossy' | 'matt' | 'none'
                 })}
               >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="none" id="none" />
+                  <Label htmlFor="none">None</Label>
+                </div>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="glossy" id="glossy" />
                   <Label htmlFor="glossy">Glossy</Label>
@@ -941,68 +945,72 @@ export const OffsetPrintForm = ({ formData, onChange }: OffsetPrintFormProps) =>
                 </div>
               </RadioGroup>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Height</Label>
-                <Input
-                  type="number"
-                  value={localFormData.laminating?.size?.height || 0}
-                  onChange={(e) => handleChange('laminating', {
-                    ...(localFormData.laminating || {}),
-                    size: {
-                      ...(localFormData.laminating?.size || {}),
-                      height: parseInt(e.target.value) || 0
-                    }
-                  })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Width</Label>
-                <Input
-                  type="number"
-                  value={localFormData.laminating?.size?.width || 0}
-                  onChange={(e) => handleChange('laminating', {
-                    ...(localFormData.laminating || {}),
-                    size: {
-                      ...(localFormData.laminating?.size || {}),
-                      width: parseInt(e.target.value) || 0
-                    }
-                  })}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Quantity</Label>
-                <Input
-                  type="number"
-                  value={localFormData.laminating?.qty || 0}
-                  onChange={(e) => handleChange('laminating', {
-                    ...(localFormData.laminating || {}),
-                    qty: parseInt(e.target.value) || 0
-                  })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Unit Price</Label>
-                <Input
-                  type="number"
-                  value={localFormData.laminating?.unitPrice || 0}
-                  onChange={(e) => handleChange('laminating', {
-                    ...(localFormData.laminating || {}),
-                    unitPrice: parseInt(e.target.value) || 0
-                  })}
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Result</Label>
-              <Input
-                type="number"
-                value={localFormData.laminating?.result || 0}
-                readOnly
-              />
-            </div>
+            {localFormData.laminating?.type !== 'none' && (
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Height</Label>
+                    <Input
+                      type="number"
+                      value={localFormData.laminating?.size?.height || 0}
+                      onChange={(e) => handleChange('laminating', {
+                        ...(localFormData.laminating || {}),
+                        size: {
+                          ...(localFormData.laminating?.size || {}),
+                          height: parseInt(e.target.value) || 0
+                        }
+                      })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Width</Label>
+                    <Input
+                      type="number"
+                      value={localFormData.laminating?.size?.width || 0}
+                      onChange={(e) => handleChange('laminating', {
+                        ...(localFormData.laminating || {}),
+                        size: {
+                          ...(localFormData.laminating?.size || {}),
+                          width: parseInt(e.target.value) || 0
+                        }
+                      })}
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Quantity</Label>
+                    <Input
+                      type="number"
+                      value={localFormData.laminating?.qty || 0}
+                      onChange={(e) => handleChange('laminating', {
+                        ...(localFormData.laminating || {}),
+                        qty: parseInt(e.target.value) || 0
+                      })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Unit Price</Label>
+                    <Input
+                      type="number"
+                      value={localFormData.laminating?.unitPrice || 0}
+                      onChange={(e) => handleChange('laminating', {
+                        ...(localFormData.laminating || {}),
+                        unitPrice: parseInt(e.target.value) || 0
+                      })}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Result</Label>
+                  <Input
+                    type="number"
+                    value={localFormData.laminating?.result || 0}
+                    readOnly
+                  />
+                </div>
+              </>
+            )}
           </div>
         )}
 
