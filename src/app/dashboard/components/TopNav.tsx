@@ -1,28 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { useAuth, User } from "@/lib/authContext";
 
 interface TopNavProps {
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
-  user: User;
 }
 
-export default function TopNav({ sidebarOpen, setSidebarOpen, user }: TopNavProps) {
+export default function TopNav({ sidebarOpen, setSidebarOpen }: TopNavProps) {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const { logOut } = useAuth();
-  const router = useRouter();
-
-  const handleSignOut = async () => {
-    try {
-      await logOut();
-      router.push("/auth/signin");
-    } catch (error) {
-      console.error("Error signing out:", error);
-    }
-  };
 
   return (
     <header className="relative z-10 bg-white shadow">
@@ -46,7 +32,7 @@ export default function TopNav({ sidebarOpen, setSidebarOpen, user }: TopNavProp
           {/* Right side items */}
           <div className="flex items-center">
             <span className="text-sm font-medium text-gray-500 mr-4 hidden sm:block">
-              Welcome, {user.display_name || user.email}
+              ZynkPrint Admin
             </span>
             <button
               type="button"
@@ -63,7 +49,7 @@ export default function TopNav({ sidebarOpen, setSidebarOpen, user }: TopNavProp
                 className="max-w-xs bg-blue-600 rounded-full flex items-center text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 h-8 w-8 justify-center text-white"
               >
                 <span className="sr-only">Open user menu</span>
-                <span>{user.display_name ? user.display_name[0].toUpperCase() : user.email?.[0].toUpperCase()}</span>
+                <span>A</span>
               </button>
               
               {/* User dropdown menu */}
@@ -71,15 +57,8 @@ export default function TopNav({ sidebarOpen, setSidebarOpen, user }: TopNavProp
                 <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none">
                   <div className="px-4 py-3">
                     <p className="text-sm">Signed in as</p>
-                    <p className="text-sm font-medium text-gray-900 truncate">{user.email}</p>
+                    <p className="text-sm font-medium text-gray-900 truncate">admin@zynkprint.com</p>
                   </div>
-                  <div className="border-t border-gray-100"></div>
-                  <button
-                    onClick={handleSignOut}
-                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  >
-                    Sign out
-                  </button>
                 </div>
               )}
             </div>
