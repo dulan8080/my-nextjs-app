@@ -14,6 +14,26 @@ const nextConfig = {
   // Ensure src directory is used
   distDir: '.next',
   // Removed output: 'export' to enable Vercel deployment with dynamic routes
+  // Add webpack configuration to handle missing modules
+  webpack: (config, { isServer }) => {
+    // Ignore missing modules during build
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      fs: false,
+      net: false,
+      tls: false,
+    };
+    
+    // Handle mysql2 module resolution
+    if (!isServer) {
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        'mysql2/promise': false,
+      };
+    }
+    
+    return config;
+  },
 };
 
 module.exports = nextConfig; 
