@@ -586,22 +586,25 @@ export const OffsetPrintForm = ({ formData, onChange, suppliers }: OffsetPrintFo
             const Icon = step.icon;
             return (
               <li key={step.id} className="flex flex-col items-center relative group w-20">
-                <div
+                <button
+                  onClick={() => setCurrentStep(step.id)}
                   className={cn(
-                    "flex h-12 w-12 items-center justify-center rounded-full border-2 transition-all duration-200",
+                    "flex h-12 w-12 items-center justify-center rounded-full border-2 transition-all duration-200 cursor-pointer hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary",
                     currentStep >= step.id
                       ? `border-transparent bg-gradient-to-br ${step.color} text-white shadow-lg`
-                      : "border-muted bg-background text-muted-foreground",
+                      : "border-muted bg-background text-muted-foreground hover:border-primary/50 hover:bg-primary/5",
                     currentStep === step.id && "ring-2 ring-offset-2 ring-primary scale-110"
                   )}
+                  title={`Go to ${step.name}`}
                 >
                   <Icon className="h-6 w-6" />
-                </div>
+                </button>
                 <div
                   className={cn(
-                    "absolute top-16 text-center text-xs font-medium min-h-[2.5rem] flex items-center justify-center px-1 w-24",
+                    "absolute top-16 text-center text-xs font-medium min-h-[2.5rem] flex items-center justify-center px-1 w-24 cursor-pointer",
                     currentStep >= step.id ? "text-primary font-semibold" : "text-muted-foreground"
                   )}
+                  onClick={() => setCurrentStep(step.id)}
                 >
                   <span className="line-clamp-2">{step.name}</span>
                 </div>
